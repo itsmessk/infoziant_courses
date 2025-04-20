@@ -1,4 +1,4 @@
-# Eduzone - Online Course Marketplace
+# Infoziant - Online Course Marketplace
 
 A full-stack application for selling online courses with user authentication, MongoDB backend, and Razorpay integration.
 
@@ -42,7 +42,7 @@ This project follows a client-server architecture:
 
 ```bash
 git clone <repository-url>
-cd eduzone
+cd Infoziant
 ```
 
 ### 2. Environment Variables
@@ -51,7 +51,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/course-marketplace
+MONGODB_URI=mongouri
 JWT_SECRET=your_jwt_secret_key
 RAZORPAY_KEY_ID=rzp_test_mock
 RAZORPAY_KEY_SECRET=mock_secret

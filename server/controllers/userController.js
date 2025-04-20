@@ -42,8 +42,29 @@ export const registerUser = async (req, res) => {
         // Create verification URL
         const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
         
+        // For development environment, return the token directly
+        if (process.env.NODE_ENV === 'development') {
+          return res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            requiresVerification: true,
+            message: 'DEV MODE: Use the token below to verify your account',
+            verificationToken,
+            verificationUrl
+          });
+        }
+        
         // Send verification email
-        await sendVerificationEmail(user.email, user.name, verificationUrl);
+        try {
+          const emailResult = await sendVerificationEmail(user.email, user.name, verificationUrl);
+          if (emailResult.error) {
+            console.warn(`Verification email could not be sent: ${emailResult.message}`);
+          }
+        } catch (emailError) {
+          console.error('Failed to send verification email:', emailError);
+          // Continue with registration despite email failure
+        }
         
         // Return success but don't send token yet
         return res.status(201).json({
@@ -51,7 +72,8 @@ export const registerUser = async (req, res) => {
           name: user.name,
           email: user.email,
           requiresVerification: true,
-          message: 'Registration successful! Please check your email to verify your account.'
+          message: 'Registration successful! Please check your email to verify your account.',
+          devToken: process.env.NODE_ENV === 'development' ? verificationToken : undefined
         });
       }
       
@@ -160,8 +182,34 @@ export const updateUserProfile = async (req, res) => {
           // Create verification URL
           const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
           
+          // For development environment, include verification info in response
+          if (process.env.NODE_ENV === 'development') {
+            const updatedUser = await user.save();
+            
+            return res.json({
+              _id: updatedUser._id,
+              name: updatedUser.name,
+              email: updatedUser.email,
+              profilePicture: updatedUser.profilePicture,
+              phone: updatedUser.phone,
+              token: generateToken(updatedUser._id),
+              verificationRequired: true,
+              message: 'DEV MODE: Email changed, use the token below to verify your new email',
+              verificationToken,
+              verificationUrl
+            });
+          }
+          
           // Send verification email
-          await sendVerificationEmail(user.email, user.name, verificationUrl);
+          try {
+            const emailResult = await sendVerificationEmail(user.email, user.name, verificationUrl);
+            if (emailResult.error) {
+              console.warn(`Verification email could not be sent: ${emailResult.message}`);
+            }
+          } catch (emailError) {
+            console.error('Failed to send verification email:', emailError);
+            // Continue with profile update despite email failure
+          }
         }
       }
       
@@ -284,8 +332,32 @@ export const resendVerificationEmail = async (req, res) => {
     // Create verification URL
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
     
+    // For development environment, return the token directly
+    if (process.env.NODE_ENV === 'development') {
+      return res.status(200).json({
+        message: 'DEV MODE: Use the token below to verify your account',
+        verificationToken,
+        verificationUrl
+      });
+    }
+    
     // Send verification email
-    await sendVerificationEmail(user.email, user.name, verificationUrl);
+    try {
+      const emailResult = await sendVerificationEmail(user.email, user.name, verificationUrl);
+      if (emailResult.error) {
+        console.warn(`Verification email could not be sent: ${emailResult.message}`);
+        return res.status(500).json({ 
+          message: 'Failed to send verification email. Please try again later.',
+          devToken: process.env.NODE_ENV === 'development' ? verificationToken : undefined
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      return res.status(500).json({ 
+        message: 'Failed to send verification email. Please try again later.',
+        devToken: process.env.NODE_ENV === 'development' ? verificationToken : undefined
+      });
+    }
     
     res.status(200).json({ message: 'Verification email sent successfully' });
   } catch (error) {
@@ -319,8 +391,33 @@ export const forgotPassword = async (req, res) => {
     // Create reset URL
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
     
-    // Send password reset email
-    await sendPasswordResetEmail(user.email, user.name, resetUrl);
+    // In development, return token directly without attempting email
+    if (process.env.NODE_ENV === 'development') {
+      console.log('DEV MODE: Bypassing email for password reset');
+      return res.status(200).json({
+        message: 'DEV MODE: Use the token below to reset your password',
+        resetToken,
+        resetUrl
+      });
+    }
+    
+    // Send password reset email for production only
+    try {
+      const emailResult = await sendPasswordResetEmail(user.email, user.name, resetUrl);
+      if (emailResult.error) {
+        console.warn(`Password reset email could not be sent: ${emailResult.message}`);
+        return res.status(500).json({ 
+          message: 'Failed to send password reset email. Please try again later.',
+          devToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      return res.status(500).json({ 
+        message: 'Failed to send password reset email. Please try again later.',
+        devToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+      });
+    }
     
     res.status(200).json({ message: 'Password reset email sent successfully' });
   } catch (error) {

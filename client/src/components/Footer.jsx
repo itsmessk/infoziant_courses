@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-col">
-            <h3 className="footer-title">Eduzone</h3>
+            <h3 className="footer-title">Infoziant</h3>
             <p className="footer-description">
               Empowering students with high-quality courses to master in-demand skills and advance their careers.
             </p>
@@ -38,7 +38,7 @@ const Footer = () => {
             <h4 className="footer-subtitle">Contact</h4>
             <div className="contact-info">
               <p><i className="fas fa-map-marker-alt"></i> 123 Education St, Learning City</p>
-              <p><i className="fas fa-envelope"></i> info@eduzone.com</p>
+              <p><i className="fas fa-envelope"></i> info@Infoziant.com</p>
               <p><i className="fas fa-phone"></i> +1 234 567 8900</p>
             </div>
             <div className="social-icons">
@@ -60,7 +60,7 @@ const Footer = () => {
         
         <div className="footer-bottom">
           <p className="copyright">
-            &copy; {currentYear} Eduzone. All rights reserved.
+            &copy; {currentYear} Infoziant. All rights reserved.
           </p>
           <div className="payment-methods">
             <img src="/payments.png" alt="Payment Methods" />

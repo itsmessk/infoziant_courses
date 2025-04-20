@@ -132,7 +132,7 @@ const Home = () => {
           <div className="grid grid-cols-2">
             <div className="testimonial-item card">
               <div className="testimonial-content">
-                <p>"The courses on Eduzone have helped me transition into a new career in web development. The instructors are amazing and the content is up-to-date."</p>
+                <p>"The courses on Infoziant have helped me transition into a new career in web development. The instructors are amazing and the content is up-to-date."</p>
               </div>
               <div className="testimonial-author">
                 <img src="https://i.pravatar.cc/100?img=1" alt="Student" className="testimonial-avatar" />
@@ -164,7 +164,7 @@ const Home = () => {
         <div className="container">
           <div className="cta-content text-center">
             <h2>Ready to Start Learning?</h2>
-            <p>Join thousands of students already learning on Eduzone</p>
+            <p>Join thousands of students already learning on Infoziant</p>
             <Link to="/register" className="btn btn-primary">Sign Up Now</Link>
           </div>
         </div>

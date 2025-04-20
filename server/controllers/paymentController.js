@@ -7,20 +7,31 @@ import Razorpay from 'razorpay';
 // Initialize Razorpay with configurable credentials based on environment
 const isTestMode = process.env.RAZORPAY_MODE !== 'production';
 
-// Configure Razorpay with appropriate credentials
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || (isTestMode ? 'rzp_test_hoWGBZv9uKPqee' : ''),
-  key_secret: process.env.RAZORPAY_KEY_SECRET || (isTestMode ? 'D91KpUVTDtIx5UzLtVGMCPdl' : '')
-});
+// Determine if Razorpay credentials are available
+const hasRazorpayCredentials = !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
 
-// Log payment environment mode
-console.log(`Payment Gateway running in ${isTestMode ? 'TEST' : 'PRODUCTION'} mode`);
+// Configure Razorpay with appropriate credentials if available
+let razorpay;
+if (hasRazorpayCredentials) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
+  console.log(`Payment Gateway running in ${isTestMode ? 'TEST' : 'PRODUCTION'} mode`);
+} else {
+  console.warn('Warning: Razorpay credentials not found. Payment functionality will be limited.');
+}
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-order
 // @access  Private
 export const createOrder = async (req, res) => {
   try {
+    // Check if Razorpay is configured
+    if (!razorpay) {
+      return res.status(500).json({ message: 'Payment service not configured. Please contact administrator.' });
+    }
+
     const { courseId } = req.body;
     
     // Check if course exists
@@ -64,7 +75,7 @@ export const createOrder = async (req, res) => {
       currency: order.currency,
       receipt: order.receipt,
       paymentId: payment._id,
-      key_id: process.env.RAZORPAY_KEY_ID || (isTestMode ? 'rzp_test_hoWGBZv9uKPqee' : ''),
+      key_id: process.env.RAZORPAY_KEY_ID,
       isTestMode
     });
   } catch (error) {
@@ -78,6 +89,11 @@ export const createOrder = async (req, res) => {
 // @access  Private
 export const verifyPayment = async (req, res) => {
   try {
+    // Check if Razorpay is configured
+    if (!razorpay) {
+      return res.status(500).json({ message: 'Payment service not configured. Please contact administrator.' });
+    }
+
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentId } = req.body;
     
     // Finding the payment record

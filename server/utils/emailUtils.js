@@ -1,108 +1,114 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
-// Create a transporter object using the default SMTP transport
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+dotenv.config();
+
+const sendEmail = async (options) => {
+  try {
+    // In development mode, skip actual email sending and return mock success
+    if (process.env.NODE_ENV === 'development') {
+      console.log('DEV MODE: Email sending skipped');
+      console.log(`Would have sent email to: ${options.email}`);
+      console.log(`Subject: ${options.subject}`);
+      return {
+        messageId: 'mock-email-id-' + Date.now(),
+        mock: true,
+        to: options.email,
+        success: true
+      };
     }
-  });
+
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT || 587,
+      secure: process.env.EMAIL_SECURE === 'true',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    // Define email options
+    const mailOptions = {
+      from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.html,
+    };
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent: ${info.messageId}`);
+    
+    return info;
+  } catch (error) {
+    console.error('Email sending error:', error.message);
+    // Don't throw the error - this allows the application to continue even if email fails
+    return { error: true, message: error.message };
+  }
 };
 
 // Send verification email
 export const sendVerificationEmail = async (email, name, verificationUrl) => {
   try {
-    const transporter = createTransporter();
-    
-    // Send mail with defined transport object
-    const info = await transporter.sendMail({
-      from: `"Virtual Training Academy" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Email Verification - Virtual Training Academy',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #0069b4;">Virtual Training Academy</h1>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <h2 style="color: #333;">Verify Your Email</h2>
-            <p>Hello ${name},</p>
-            <p>Thank you for registering with Virtual Training Academy. To complete your registration, please verify your email address by clicking the button below:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationUrl}" style="background-color: #0069b4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email Address</a>
-            </div>
-            
-            <p>If the button doesn't work, you can also click on the link below or copy and paste it into your browser:</p>
-            <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-            
-            <p>This link will expire in 24 hours.</p>
-          </div>
-          
-          <div style="border-top: 1px solid #ddd; padding-top: 20px; color: #777; font-size: 12px;">
-            <p>If you did not create an account, please ignore this email.</p>
-            <p>&copy; ${new Date().getFullYear()} Virtual Training Academy. All rights reserved.</p>
-          </div>
+    const subject = 'Email Verification - Infoziant';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4a5568;">Verify Your Email Address</h2>
+        <p>Hello ${name},</p>
+        <p>Thank you for registering with Infoziant. Please verify your email address by clicking the button below:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" style="background-color: #4a5568; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Verify Email</a>
         </div>
-      `
+        <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+        <p>${verificationUrl}</p>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you did not create an account, please ignore this email.</p>
+        <p>Best regards,<br>The Infoziant Team</p>
+      </div>
+    `;
+
+    return await sendEmail({
+      email,
+      subject,
+      html,
     });
-    
-    console.log('Verification email sent: %s', info.messageId);
-    return info;
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    throw error;
+    console.error('Verification email error:', error.message);
+    return { error: true, message: error.message };
   }
 };
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, name, resetUrl) => {
   try {
-    const transporter = createTransporter();
-    
-    // Send mail with defined transport object
-    const info = await transporter.sendMail({
-      from: `"Virtual Training Academy" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Password Reset - Virtual Training Academy',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #0069b4;">Virtual Training Academy</h1>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <h2 style="color: #333;">Reset Your Password</h2>
-            <p>Hello ${name},</p>
-            <p>We received a request to reset your password. Click the button below to create a new password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #0069b4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
-            </div>
-            
-            <p>If the button doesn't work, you can also click on the link below or copy and paste it into your browser:</p>
-            <p><a href="${resetUrl}">${resetUrl}</a></p>
-            
-            <p>This link will expire in 10 minutes.</p>
-            <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
-          </div>
-          
-          <div style="border-top: 1px solid #ddd; padding-top: 20px; color: #777; font-size: 12px;">
-            <p>&copy; ${new Date().getFullYear()} Virtual Training Academy. All rights reserved.</p>
-          </div>
+    const subject = 'Password Reset - Infoziant';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4a5568;">Reset Your Password</h2>
+        <p>Hello ${name},</p>
+        <p>You requested a password reset for your Infoziant account. Please click the button below to reset your password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #4a5568; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Reset Password</a>
         </div>
-      `
+        <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+        <p>${resetUrl}</p>
+        <p>This link will expire in 10 minutes.</p>
+        <p>If you did not request a password reset, please ignore this email.</p>
+        <p>Best regards,<br>The Infoziant Team</p>
+      </div>
+    `;
+
+    return await sendEmail({
+      email,
+      subject,
+      html,
     });
-    
-    console.log('Password reset email sent: %s', info.messageId);
-    return info;
   } catch (error) {
-    console.error('Error sending password reset email:', error);
-    throw error;
+    console.error('Password reset email error:', error.message);
+    return { error: true, message: error.message };
   }
-}; 
+};
+
+export default { sendVerificationEmail, sendPasswordResetEmail }; 

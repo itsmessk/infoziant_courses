@@ -25,8 +25,8 @@ const Navbar = ({ user, handleLogout }) => {
         <div className="navbar-content">
           <div className="logo">
             <Link to="/">
-              <img src="/logo.png" alt="Course Marketplace" />
-              <span>Eduzone</span>
+              <img src="/logo.png" alt="Infoziant" />
+              <span>Infoziant</span>
             </Link>
           </div>
           

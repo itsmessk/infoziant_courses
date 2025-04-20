@@ -1,6 +1,6 @@
-# Eduzone Client
+# Infoziant Client
 
-This is the frontend client for the Eduzone online learning platform.
+This is the frontend client for the Infoziant online learning platform.
 
 ## Getting Started
 
