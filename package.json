@@ -9,10 +9,10 @@
     "server": "nodemon server/server.js",
     "client": "cd client && npm run dev",
     "client:install": "cd client && npm install",
-    "client:build": "cd client && npm run build",
+    "client:build": "cd client && npm install && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "seed": "node server/seeds/courseSeeder.js",
-    "build": "npm run client:build",
+    "build": "npm install && npm run client:build",
     "deploy": "npm run build && npm run start"
   },
   "keywords": [

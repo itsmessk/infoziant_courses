@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb+srv://sundarinfoziant:ceahzJvShvxIE3tM@infoziant.byupx6p.mongodb.net/?retryWrites=true&w=majority&appName=infoziant
+      - JWT_SECRET=iuytfrdfgthyuijkhfgvc765
+      - REQUIRE_EMAIL_VERIFICATION=false
+    restart: unless-stopped 
