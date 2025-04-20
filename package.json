@@ -1,0 +1,35 @@
+{
+  "name": "eduzone",
+  "version": "1.0.0",
+  "description": "Online Learning Platform",
+  "type": "module",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "nodemon server/server.js",
+    "client": "cd client && npm run dev",
+    "client:install": "cd client && npm install",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "seed": "node server/seeds/courseSeeder.js"
+  },
+  "keywords": [
+    "mern",
+    "education",
+    "courses"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "razorpay": "^2.9.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  }
+}
