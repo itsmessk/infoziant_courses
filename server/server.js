@@ -28,6 +28,47 @@ app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/payments', paymentRoutes);
 
+// Guest enrollment endpoints
+app.post('/api/enrollment/guest-enrollment', async (req, res) => {
+  try {
+    const { courseId, courseName, coursePrice, name, email, phone } = req.body;
+    
+    // Create record in course_cop collection
+    const enrollment = await mongoose.connection.collection('course_cop').insertOne({
+      courseId,
+      courseName,
+      coursePrice,
+      userName: name,
+      userEmail: email,
+      userPhone: phone,
+      enrollmentDate: new Date(),
+      paymentStatus: 'pending'
+    });
+    
+    res.status(201).json({ success: true, enrollmentId: enrollment.insertedId });
+  } catch (error) {
+    console.error('Error saving enrollment information:', error);
+    res.status(500).json({ success: false, message: 'Failed to save enrollment information' });
+  }
+});
+
+// Update payment status endpoint
+app.post('/api/enrollment/update-payment-status', async (req, res) => {
+  try {
+    const { email, courseId, paymentStatus } = req.body;
+    
+    await mongoose.connection.collection('course_cop').updateOne(
+      { userEmail: email, courseId: courseId },
+      { $set: { paymentStatus: paymentStatus } }
+    );
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ success: false, message: 'Failed to update payment status' });
+  }
+});
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Set static folder
@@ -54,4 +95,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});

@@ -13,6 +13,12 @@ const CourseDetails = ({ user }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [orderData, setOrderData] = useState(null);
+  const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    name: user ? user.name : '',
+    email: user ? user.email : '',
+    phone: ''
+  });
   
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -37,25 +43,73 @@ const CourseDetails = ({ user }) => {
     fetchCourseDetails();
   }, [id, user]);
   
-  const handleEnrollment = async () => {
-    if (!user) {
-      toast.error('Please login to enroll in this course');
-      navigate('/login');
-      return;
-    }
+  const handleEnrollment = () => {
+    // Open user info modal directly without login check
+    setShowUserInfoModal(true);
+  };
+  
+  const handleUserInfoSubmit = async (e) => {
+    e.preventDefault();
     
     try {
-      // Create payment order
-      const data = await createPaymentOrder(id);
-      setOrderData(data);
-      setShowPaymentModal(true);
+      // Save user info to database in course_cop collection
+      const response = await fetch('/api/enrollment/guest-enrollment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          courseId: id,
+          courseName: course?.title,
+          coursePrice: course?.price,
+          ...userInfo
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save user information');
+      }
+      
+      // Close user info modal
+      setShowUserInfoModal(false);
+      
+      // Create payment order and show payment modal
+      try {
+        const data = await createPaymentOrder(id, userInfo.email, userInfo.name);
+        setOrderData(data);
+        setShowPaymentModal(true);
+      } catch (error) {
+        console.error('Failed to create payment order:', error);
+        toast.error('Failed to create payment order. Please try again later.');
+      }
     } catch (error) {
-      console.error('Failed to initiate payment:', error);
-      toast.error('Failed to initiate payment. Please try again later.');
+      console.error('Failed to process enrollment:', error);
+      toast.error('Failed to process enrollment. Please try again later.');
     }
   };
   
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
   const handlePaymentSuccess = () => {
+    // Update enrollment record with payment status
+    fetch('/api/enrollment/update-payment-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: userInfo.email,
+        courseId: id,
+        paymentStatus: 'completed'
+      })
+    }).catch(err => console.error('Error updating payment status:', err));
+    
     setIsEnrolled(true);
     setShowPaymentModal(false);
     toast.success('Payment successful! You are now enrolled in this course.');
@@ -238,6 +292,65 @@ const CourseDetails = ({ user }) => {
         </div>
       </div>
       
+      {/* User Information Modal */}
+      {showUserInfoModal && (
+        <div className="modal-overlay">
+          <div className="modal-content user-info-modal">
+            <h2>Complete Your Enrollment</h2>
+            <p>Please provide the following information to continue with course enrollment.</p>
+            
+            <form onSubmit={handleUserInfoSubmit}>
+              <div className="form-group">
+                <label htmlFor="name">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={userInfo.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={userInfo.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="phone">Phone Number</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={userInfo.phone}
+                  onChange={handleInputChange}
+                  pattern="[0-9]{10}"
+                  placeholder="10-digit number"
+                  required
+                />
+              </div>
+              
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowUserInfoModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Proceed to Payment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
       {/* Mock Payment Modal */}
       {showPaymentModal && orderData && (
         <MockPayment 
@@ -250,4 +363,4 @@ const CourseDetails = ({ user }) => {
   );
 };
 
-export default CourseDetails; 
+export default CourseDetails;

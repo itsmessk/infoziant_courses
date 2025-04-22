@@ -54,9 +54,13 @@ export const getEnrolledCourses = async () => {
 };
 
 // Payment APIs
-export const createPaymentOrder = async (courseId) => {
+export const createPaymentOrder = async (courseId, email = null, name = null) => {
   try {
-    const response = await api.post('/payments/create-order', { courseId });
+    const response = await api.post('/payments/create-order', { 
+      courseId,
+      userEmail: email,
+      userName: name 
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating payment order:', error);
@@ -194,4 +198,4 @@ export const resendVerificationEmail = async (data) => {
   }
 };
 
-export default api; 
+export default api;
